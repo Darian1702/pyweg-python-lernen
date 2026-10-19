@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Lerne Python Schritt für Schritt mit einem strukturierten 4-Wochen-Lernpfad."
+    />
+    <meta name="theme-color" content="#f5f6f2" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <title>Python lernen – Schritt für Schritt</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="PyWeg Startseite">
+        <span class="brand__mark" aria-hidden="true">py</span>
+        <span>py<span class="brand__light">weg</span></span>
+      </a>
+      <div class="topbar__note">
+        <span class="status-dot" aria-hidden="true"></span>
+        <label class="profile-picker">
+          <span class="profile-picker__label">Profil</span>
+          <select id="profile-select" aria-label="Lernprofil auswählen">
+            <option value="darian">Darian</option>
+            <option value="nello">Nello</option>
+          </select>
+        </label>
+        <span class="profile-local-note">nur auf diesem Gerät</span>
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <aside class="sidebar" aria-label="Kursübersicht">
+        <div class="sidebar__intro">
+          <p class="eyebrow">DEIN KURS</p>
+          <h2>Python von<br />Null an</h2>
+          <p class="sidebar__description">4 Wochen · ca. 1 Stunde am Tag</p>
+        </div>
+
+        <section class="progress-card" aria-label="Dein Lernfortschritt">
+          <div class="progress-card__row">
+            <span>Dein Fortschritt</span>
+            <strong id="progress-percent">0 %</strong>
+          </div>
+          <div
+            class="progress-track"
+            id="progress-track"
+            role="progressbar"
+            aria-label="Kursfortschritt"
+            aria-valuemin="0"
+            aria-valuemax="28"
+            aria-valuenow="0"
+          >
+            <span id="progress-fill"></span>
+          </div>
+          <p id="progress-count">0 von 28 Lektionen</p>
+        </section>
+
+        <nav class="course-nav" id="course-nav" aria-label="Lektionen"></nav>
+
+        <div class="sidebar__tip">
+          <span class="tip-icon" aria-hidden="true">✳</span>
+          <p><strong>Demo-Profile</strong><br />Darian und Nello haben getrennte Lernstände in diesem Browser. Eine Synchronisierung zwischen Geräten ist noch nicht eingerichtet.</p>
+        </div>
+      </aside>
+
+      <section class="lesson-view" id="lesson-view" aria-live="polite"></section>
+    </main>
+  </body>
+</html>
