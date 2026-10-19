@@ -21,7 +21,7 @@
 }
 
 body {
-  min-width: 320px;
+  min-width: 0;
   min-height: 100vh;
   min-height: 100svh;
   margin: 0;
@@ -387,6 +387,533 @@ button {
   font-size: 10px;
 }
 
+.day-one-plan {
+  margin: 20px 0 17px;
+  padding: 17px 19px 13px;
+  border: 1px solid #e5eae1;
+  border-radius: 13px;
+  background: #fbfcf9;
+}
+
+.day-one-plan__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.day-one-plan__heading .section-label {
+  margin-bottom: 4px;
+}
+
+.day-one-plan__heading h2 {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  font-size: 16px;
+  letter-spacing: -0.035em;
+}
+
+.day-one-plan__total {
+  padding: 6px 9px;
+  border-radius: 20px;
+  color: #41674a;
+  background: #edf3e9;
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.day-one-plan__stages {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.day-one-plan__stage {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 9px;
+  border: 1px solid #eaede7;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.day-one-plan__stage--active {
+  border-color: #b6cdb5;
+  background: #f2f7f1;
+}
+
+.day-one-plan__stage--done .day-one-plan__stage-mark {
+  color: #fff;
+  background: #628b68;
+}
+
+.day-one-plan__stage-mark {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  color: #788478;
+  background: #f0f2ed;
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+}
+
+.day-one-plan__stage--active .day-one-plan__stage-mark {
+  color: #fff;
+  background: var(--green);
+}
+
+.day-one-plan__stage-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.day-one-plan__stage-copy strong {
+  overflow: hidden;
+  color: #485349;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.day-one-plan__stage-copy small {
+  color: #899187;
+  font-size: 9px;
+}
+
+.day-one-plan__current {
+  margin: 9px 0 0;
+  color: #899087;
+  font-size: 10px;
+}
+
+.day-one-step,
+.day-one-exercise,
+.day-one-feedback,
+.day-one-complete {
+  padding: 23px clamp(18px, 3vw, 27px);
+  border: 1px solid #e8eae4;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.day-one-step__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.day-one-step__topline .section-label {
+  margin: 0;
+}
+
+.day-one-step h2,
+.day-one-exercise h2,
+.day-one-feedback h2,
+.day-one-complete h2 {
+  margin: 0 0 8px;
+  font-family: "Manrope", sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1.3;
+}
+
+.day-one-step__objective {
+  margin: 0 0 15px;
+  color: #517356;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.day-one-step__prose {
+  margin: 0;
+  color: #626b61;
+  font-size: 13px;
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+.worked-example,
+.try-it {
+  margin-top: 14px;
+  padding: 13px 15px;
+  border-left: 3px solid #b4c994;
+  border-radius: 0 8px 8px 0;
+  background: #f6f8f2;
+}
+
+.worked-example__title,
+.try-it strong {
+  display: block;
+  margin: 0 0 5px;
+  color: #496a4e;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.worked-example p:not(.worked-example__title),
+.try-it p {
+  margin: 0;
+  color: #667064;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.day-one-step__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 13px;
+}
+
+.day-one-step__footer .lesson-footer__hint {
+  max-width: 420px;
+}
+
+.exercise-time {
+  flex: 0 0 auto;
+  color: #818a7f;
+  font-family: "DM Mono", monospace;
+  font-size: 10px;
+}
+
+.day-one-exercise__prompt {
+  margin: 5px 0 14px;
+  color: #4f594f;
+  font-size: 13px;
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+.day-one-exercise > .code-example {
+  margin: 12px 0 15px;
+}
+
+.exercise-progress {
+  height: 5px;
+  margin: -4px 0 19px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: #edf0e9;
+}
+
+.exercise-progress span {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: #76a982;
+  transition: width 180ms ease;
+}
+
+.hint-panel {
+  margin: 10px 0 17px;
+  border: 1px solid #eceee8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fafbf8;
+}
+
+.hint-panel summary {
+  color: #537559;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.hint-panel p {
+  margin: 8px 0 0;
+  color: #677165;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.exercise-options {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.exercise-options legend,
+.exercise-response-label {
+  margin-bottom: 8px;
+  color: #566055;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.exercise-options .quiz-option {
+  padding: 10px 12px;
+  font-size: 12px;
+}
+
+.exercise-response-label {
+  display: block;
+  margin-top: 4px;
+}
+
+.day-one-answer textarea {
+  width: 100%;
+  min-height: 76px;
+  resize: vertical;
+  border: 1px solid #dfe4dc;
+  border-radius: 8px;
+  padding: 11px 12px;
+  color: #344238;
+  background: #fbfcf9;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.day-one-answer textarea:focus-visible {
+  border-color: #7da883;
+  outline: 2px solid #b9d2bc;
+  outline-offset: 1px;
+}
+
+.day-one-answer textarea.exercise-code-input {
+  min-height: 112px;
+  color: #e1ebdf;
+  background: #202b24;
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  tab-size: 4;
+}
+
+.exercise-input-help {
+  margin: 6px 0 12px;
+  color: #899087;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.exercise-options--self-check {
+  margin-top: 13px;
+}
+
+.exercise-options--self-check .quiz-option {
+  font-size: 11px;
+}
+
+.day-one-answer > .quiz-submit {
+  min-height: 37px;
+  padding: 0 14px;
+  font-size: 11px;
+}
+
+.day-one-session-note {
+  margin: 12px 0 0;
+  color: #858d83;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.day-one-feedback > .section-label {
+  margin-bottom: 10px;
+}
+
+.day-one-feedback--correct {
+  border-color: #dce8dc;
+  background: #fdfffc;
+}
+
+.day-one-feedback--incorrect {
+  border-color: #eadfd8;
+}
+
+.day-one-feedback--self {
+  border-color: #e7e9df;
+}
+
+.day-one-feedback h3 {
+  margin: 18px 0 5px;
+  color: #737c71;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.feedback-explanation,
+.feedback-reason p:not(.feedback-reason__title) {
+  margin: 0;
+  color: #626b61;
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+.feedback-hint,
+.feedback-reason {
+  margin-top: 13px;
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: #f6f8f2;
+}
+
+.feedback-hint strong,
+.feedback-reason__title {
+  display: block;
+  margin: 0 0 5px;
+  color: #4c6f50;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.feedback-hint p {
+  margin: 0;
+  color: #626b61;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.feedback-solution {
+  margin-top: 13px;
+  overflow: hidden;
+  border: 1px solid #2d3c32;
+  border-radius: 9px;
+  background: #202b24;
+}
+
+.feedback-solution__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #35453a;
+  padding: 10px 13px;
+}
+
+.feedback-solution__heading strong {
+  color: #e3ecdf;
+  font-size: 11px;
+}
+
+.feedback-solution__heading span {
+  color: #aab5a7;
+  font-size: 9px;
+}
+
+.feedback-solution pre,
+.your-answer pre {
+  margin: 0;
+  overflow-x: auto;
+  padding: 13px;
+  color: #e1ebdf;
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.your-answer {
+  margin-top: 11px;
+}
+
+.your-answer summary {
+  color: #667265;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.your-answer pre {
+  margin-top: 7px;
+  border-radius: 7px;
+  color: #596359;
+  background: #f3f5f0;
+}
+
+.feedback-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.secondary-button {
+  min-height: 39px;
+  padding: 0 12px;
+  border: 1px solid #dfe4dc;
+  border-radius: 8px;
+  color: #526553;
+  background: #fff;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.secondary-button:hover {
+  background: #f4f7f2;
+}
+
+.day-one-complete {
+  padding: 29px clamp(18px, 4vw, 36px);
+}
+
+.day-one-complete__icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  color: #fff;
+  background: var(--green);
+  font-size: 19px;
+}
+
+.day-one-complete > .section-label {
+  margin-bottom: 8px;
+}
+
+.day-one-complete > p:not(.section-label, .lesson-card__note) {
+  max-width: 650px;
+  color: #677065;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.day-one-complete__summary {
+  margin: 17px 0;
+  border: 1px solid #e8ede4;
+  border-radius: 9px;
+  padding: 14px 16px;
+  color: #566155;
+  background: #fafbf8;
+  font-size: 11px;
+}
+
+.day-one-complete__summary ul {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0 0;
+  padding-left: 19px;
+  line-height: 1.6;
+}
+
+.day-one-complete__summary code {
+  color: #42714d;
+  font-family: "DM Mono", monospace;
+}
+
+.day-one-complete > .complete-button {
+  margin-top: 10px;
+}
+
 .lesson-card,
 .practice-card,
 .quiz-card {
@@ -684,6 +1211,11 @@ summary:focus-visible,
   .practice-quiz-grid {
     grid-template-columns: 1fr;
   }
+
+  .day-one-plan__stage {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 @media (max-width: 650px) {
@@ -809,6 +1341,54 @@ summary:focus-visible,
 
   .lesson-card {
     padding: 18px;
+  }
+
+  .day-one-plan {
+    padding: 14px;
+  }
+
+  .day-one-plan__stages {
+    gap: 5px;
+  }
+
+  .day-one-plan__stage {
+    align-items: center;
+    flex-direction: row;
+    gap: 5px;
+    padding: 7px 5px;
+  }
+
+  .day-one-plan__stage-mark {
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+    font-size: 9px;
+  }
+
+  .day-one-plan__stage-copy strong {
+    font-size: 9px;
+  }
+
+  .day-one-plan__stage-copy small {
+    font-size: 8px;
+  }
+
+  .day-one-step__footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .day-one-step__footer .complete-button {
+    align-self: flex-end;
+  }
+
+  .feedback-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .feedback-actions > button {
+    width: 100%;
   }
 }
 

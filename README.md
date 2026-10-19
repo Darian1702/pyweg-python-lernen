@@ -6,6 +6,10 @@ Ein kostenloser, deutschsprachiger Lernpfad mit 28 Tageslektionen für den Einst
 
 Öffne `index.html` im Browser. Lektionen, Übungen und Quiz funktionieren direkt. Für Installation und Offline-Modus braucht der Browser HTTPS oder `localhost`, da Service Worker nicht bei `file://` ausgeführt werden.
 
+## Tag 1: ausführliche Probestunde
+
+Tag 1 ist als etwa einstündige Lerneinheit aufgebaut: 10 Minuten Lernen in drei Abschnitten, 35 Minuten für acht schrittweise Übungen und 15 Minuten für fünf Wiederholungsfragen. Nach jeder Aufgabe öffnet sich eine eigene Auswertung mit Erklärung, Denkanstoß und Beispielantwort. Bei offenen Programmieraufgaben vergleichst du deinen eigenen Lösungsweg selbst mit dem Beispiel; kurze Code- und Ausgabeaufgaben werden automatisch geprüft. Die Website führt Python-Code nicht selbst aus – für praktische Versuche kannst du die Beispiele zusätzlich in einem lokalen Python-Interpreter starten.
+
 ## Auf GitHub Pages veröffentlichen
 
 1. Lade dieses Projekt in ein öffentliches GitHub-Repository hoch.
@@ -30,6 +34,7 @@ Es gibt derzeit weder echte Benutzerkonten noch eine Zugriffskontrolle. Wer Brow
 - `index.html` – Seitenstruktur und App-Einstieg
 - `style.css` – responsives Design
 - `script.js` – Lernpfad, Übungen, Quiz und lokale Fortschritte
+- `day-one.js` – ausführlicher interaktiver Lern-, Übungs- und Wiederholungsblock für Tag 1
 - `manifest.webmanifest` – Installationsinformationen für die PWA
 - `service-worker.js` – Offline-Caching
 - `icon.svg` – App-Symbol

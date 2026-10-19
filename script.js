@@ -437,9 +437,62 @@ const progressFill = document.querySelector("#progress-fill");
 const progressTrack = document.querySelector("#progress-track");
 const progressCount = document.querySelector("#progress-count");
 
+function createDayOneSession() {
+  return {
+    stage: "learning",
+    index: 0,
+    stageBeforeFeedback: null,
+    feedback: null,
+  };
+}
+
+function normalizeDayOneSession(session) {
+  if (!session || typeof session !== "object") return createDayOneSession();
+
+  const stageLengths = {
+    learning: dayOneCurriculum.learning.length,
+    practice: dayOneCurriculum.practice.length,
+    feedback: dayOneCurriculum.practice.length,
+    review: dayOneCurriculum.review.length,
+    complete: 1,
+  };
+  const stage = Object.hasOwn(stageLengths, session.stage)
+    ? session.stage
+    : "learning";
+  const index = Number.isInteger(session.index)
+    ? Math.min(Math.max(session.index, 0), stageLengths[stage] - 1)
+    : 0;
+  const feedback =
+    stage === "feedback" &&
+    session.feedback &&
+    typeof session.feedback === "object"
+      ? {
+          correct: Boolean(session.feedback.correct),
+          selfCheck: Boolean(session.feedback.selfCheck),
+          selfCheckOutcome:
+            session.feedback.selfCheckOutcome === "tried" ? "tried" : "need-help",
+          response: String(session.feedback.response ?? ""),
+          selectedIndex: Number.isInteger(session.feedback.selectedIndex)
+            ? session.feedback.selectedIndex
+            : null,
+        }
+      : null;
+
+  const stageBeforeFeedback =
+    stage === "feedback" &&
+    ["practice", "review"].includes(session.stageBeforeFeedback)
+      ? session.stageBeforeFeedback
+      : null;
+  return { stage, index, stageBeforeFeedback, feedback };
+}
+
 function readSavedState() {
   const saved = localStorage.getItem(STORAGE_KEY);
-  const emptyProfile = () => ({ completed: [], currentLesson: 1 });
+  const emptyProfile = () => ({
+    completed: [],
+    currentLesson: 1,
+    dayOneSession: createDayOneSession(),
+  });
   if (!saved) {
     return {
       activeProfile: "darian",
@@ -462,7 +515,14 @@ function readSavedState() {
         )
           ? profile.currentLesson
           : 1;
-        return [id, { completed, currentLesson }];
+        return [
+          id,
+          {
+            completed,
+            currentLesson,
+            dayOneSession: normalizeDayOneSession(profile.dayOneSession),
+          },
+        ];
       }),
     );
     const activeProfile = PROFILE_IDS.includes(parsed.activeProfile)
@@ -508,6 +568,310 @@ function escapeHtml(value) {
     };
     return entities[character];
   });
+}
+
+function renderDayOne(lesson, profile) {
+  const session = profile.dayOneSession;
+  const stages = [
+    { id: "learning", label: "Lernen", duration: "10 min" },
+    { id: "practice", label: "Üben", duration: "35 min" },
+    { id: "review", label: "Wiederholen", duration: "15 min" },
+  ];
+  const stageLabels = {
+    learning: "Lernen",
+    practice: "Üben",
+    feedback: "Auswertung",
+    review: "Wiederholen",
+    complete: "Abgeschlossen",
+  };
+
+  let content;
+  if (session.stage === "learning") {
+    content = renderDayOneLearning(session);
+  } else if (session.stage === "practice" || session.stage === "review") {
+    content = renderDayOneExercise(session);
+  } else if (session.stage === "feedback") {
+    content = renderDayOneFeedback(session);
+  } else {
+    content = renderDayOneComplete();
+  }
+
+  const phaseIndex =
+    session.stage === "learning"
+      ? 0
+      : session.stage === "review" ||
+          (session.stage === "feedback" &&
+            session.stageBeforeFeedback === "review")
+        ? 2
+        : 1;
+
+  lessonView.innerHTML = `
+    <header class="lesson-heading">
+      <div class="lesson-heading__meta">
+        <span>Woche ${lesson.week} · ${escapeHtml(lesson.weekTitle)}</span>
+        <span>Tag 01 von 28</span>
+      </div>
+      <h1>${escapeHtml(lesson.title)}</h1>
+      <p class="lesson-heading__subtitle">Deine erste Python-Stunde: selbst entdecken, ausprobieren und wiederholen.</p>
+    </header>
+
+    <section class="day-one-plan" aria-label="Stundenplan">
+      <div class="day-one-plan__heading">
+        <div>
+          <p class="section-label">DEIN STUNDENPLAN</p>
+          <h2>Eine Stunde, Schritt für Schritt</h2>
+        </div>
+        <span class="day-one-plan__total">ca. 60 Minuten</span>
+      </div>
+      <div class="day-one-plan__stages">
+        ${stages
+          .map((stage, index) => {
+            const active = phaseIndex === index && session.stage !== "complete";
+            const done =
+              session.stage === "complete" ||
+              (session.stage !== "learning" && index === 0) ||
+              ((session.stage === "review" ||
+                (session.stage === "feedback" &&
+                  session.stageBeforeFeedback === "review")) &&
+                index === 1);
+            return `<div class="day-one-plan__stage${active ? " day-one-plan__stage--active" : ""}${done ? " day-one-plan__stage--done" : ""}">
+              <span class="day-one-plan__stage-mark">${done ? "✓" : `0${index + 1}`}</span>
+              <span class="day-one-plan__stage-copy"><strong>${stage.label}</strong><small>${stage.duration}</small></span>
+            </div>`;
+          })
+          .join("")}
+      </div>
+      <p class="day-one-plan__current">Gerade: ${stageLabels[session.stage]}</p>
+    </section>
+    ${content}
+    ${
+      session.stage === "complete"
+        ? `<nav class="lesson-nav" aria-label="Kursnavigation">
+            <button type="button" data-action="restart-day-one">↻ Tag 1 wiederholen</button>
+            <button type="button" data-action="next">Nächste Lektion →</button>
+          </nav>`
+        : ""
+    }
+  `;
+}
+
+function renderDayOneLearning(session) {
+  const segment = dayOneCurriculum.learning[session.index];
+  const total = dayOneCurriculum.learning.length;
+  return `
+    <section class="day-one-step" aria-labelledby="day-one-step-title">
+      <div class="day-one-step__topline">
+        <p class="section-label"><span class="section-label__icon" aria-hidden="true">01</span>LERNEN · ABSCHNITT ${session.index + 1} VON ${total}</p>
+        <span class="exercise-time">ca. ${segment.duration} min</span>
+      </div>
+      <h2 id="day-one-step-title">${escapeHtml(segment.title)}</h2>
+      <p class="day-one-step__objective">${escapeHtml(segment.objective)}</p>
+      <p class="day-one-step__prose">${escapeHtml(segment.explanation)}</p>
+      <pre class="code-example"><code>${escapeHtml(segment.example)}</code></pre>
+      <div class="worked-example">
+        <p class="worked-example__title">Gemeinsam durchdenken</p>
+        <p>${escapeHtml(segment.walkthrough)}</p>
+      </div>
+      <div class="try-it">
+        <strong>Mach kurz mit</strong>
+        <p>${escapeHtml(segment.practice)}</p>
+      </div>
+      <p class="lesson-card__note"><span aria-hidden="true">✦</span><span>${escapeHtml(segment.takeaway)}</span></p>
+    </section>
+    <div class="day-one-step__footer">
+      <p class="lesson-footer__hint">Lies in Ruhe. Die Beispiele kannst du gern in einer Python-Konsole selbst ausprobieren.</p>
+      <button class="complete-button" type="button" data-action="day-one-next">
+        ${session.index + 1 === total ? "Weiter zu den Übungen" : "Verstanden, weiter"}
+        <span aria-hidden="true">→</span>
+      </button>
+    </div>
+  `;
+}
+
+function renderDayOneExercise(session) {
+  const isReview = session.stage === "review";
+  const exercises = isReview
+    ? dayOneCurriculum.review
+    : dayOneCurriculum.practice;
+  const exercise = exercises[session.index];
+  const phaseLabel = isReview ? "WIEDERHOLEN" : "ÜBEN";
+  const formContent = renderExerciseInput(exercise);
+
+  return `
+    <section class="day-one-exercise" aria-labelledby="day-one-exercise-title">
+      <div class="day-one-step__topline">
+        <p class="section-label"><span class="section-label__icon" aria-hidden="true">${isReview ? "03" : "02"}</span>${phaseLabel} · AUFGABE ${session.index + 1} VON ${exercises.length}</p>
+        <span class="exercise-time">ca. ${exercise.duration} min</span>
+      </div>
+      <div class="exercise-progress" role="progressbar" aria-label="Fortschritt in ${isReview ? "der Wiederholung" : "den Übungen"}" aria-valuemin="0" aria-valuemax="${exercises.length}" aria-valuenow="${session.index}">
+        <span style="width: ${((session.index + (session.stage === "feedback" ? 1 : 0)) / exercises.length) * 100}%"></span>
+      </div>
+      <h2 id="day-one-exercise-title">${escapeHtml(exercise.title)}</h2>
+      <p class="day-one-exercise__prompt">${escapeHtml(exercise.prompt)}</p>
+      ${exercise.code ? `<pre class="code-example"><code>${escapeHtml(exercise.code)}</code></pre>` : ""}
+      ${exercise.hint ? `<details class="hint-panel"><summary>Ersten Hinweis ansehen</summary><p>${escapeHtml(exercise.hint)}</p></details>` : ""}
+      <form class="day-one-answer" data-exercise-stage="${session.stage}" data-exercise-index="${session.index}">
+        ${formContent}
+          <button class="quiz-submit" type="submit">Antwort prüfen</button>
+        <p class="quiz-feedback" id="day-one-form-feedback" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+    <p class="day-one-session-note">Arbeite zuerst selbst. Nach dem Prüfen erhältst du eine eigene Auswertungsseite mit Erklärung und Musterlösung.</p>
+  `;
+}
+
+function renderExerciseInput(exercise) {
+  if (exercise.type === "choice") {
+    return `<fieldset class="exercise-options">
+      <legend>Wähle eine Antwort</legend>
+      ${exercise.options
+        .map(
+          (option, index) => `<label class="quiz-option">
+            <input type="radio" name="answer" value="${index}" required />
+            <span>${escapeHtml(option)}</span>
+          </label>`,
+        )
+        .join("")}
+    </fieldset>`;
+  }
+
+  if (exercise.type === "code" || exercise.type === "text") {
+    const code = exercise.type === "code";
+    return `<label class="exercise-response-label" for="exercise-response">${code ? "Dein Python-Code" : "Deine Antwort"}</label>
+      <textarea id="exercise-response" name="response" rows="${code ? 5 : 3}" ${code ? 'class="exercise-code-input" spellcheck="false"' : ""} placeholder="${code ? "print('Dein Text')" : "Schreibe deine Antwort hier auf"}" required></textarea>
+      <p class="exercise-input-help">${code ? "Schreibe deinen Code selbst. Die Musterlösung erscheint erst nach dem Prüfen." : "Bei mehrzeiligen Ausgaben: eine Zeile pro Ausgabezeile."}</p>`;
+  }
+
+  const isReflection = exercise.type === "reflection";
+  return `<label class="exercise-response-label" for="exercise-response">${isReflection ? "Deine Erklärung" : "Dein Versuch (optional)"}</label>
+    <textarea id="exercise-response" name="response" rows="4" ${isReflection ? "required" : ""} placeholder="${isReflection ? "Formuliere die Antwort erst selbst, bevor du die Erklärung siehst." : "Schreibe hier dein eigenes Programm auf."}"></textarea>
+    <fieldset class="exercise-options exercise-options--self-check">
+      <legend>${isReflection ? "Hast du eine eigene Antwort formuliert?" : "Wie lief dein eigener Versuch?"}</legend>
+      <label class="quiz-option"><input type="radio" name="selfCheck" value="tried" required /><span>${isReflection ? "Ja, ich habe eine Antwort aufgeschrieben." : "Ich habe es ausprobiert und möchte vergleichen."}</span></label>
+      <label class="quiz-option"><input type="radio" name="selfCheck" value="need-help" required /><span>${isReflection ? "Ich brauche noch einen Denkanstoß." : "Ich stecke fest und möchte die Erklärung sehen."}</span></label>
+    </fieldset>`;
+}
+
+function renderDayOneFeedback(session) {
+  const exercise = getDayOneExercise(session.stage, session.index);
+  const feedback = session.feedback;
+  const selfCheck = feedback.selfCheck;
+  const isReview = session.stageBeforeFeedback === "review";
+  const feedbackText =
+    selfCheck
+      ? feedback.selfCheckOutcome === "tried"
+        ? "Gut gemacht: Du hast erst selbst nachgedacht. Vergleiche deine Antwort in Ruhe mit dem Beispiel."
+        : "Kein Problem – genau dafür ist die Erklärung da. Lies die Lösung Schritt für Schritt und probiere es danach noch einmal selbst."
+      : feedback.correct
+        ? exercise.type === "choice"
+          ? exercise.optionFeedback[feedback.selectedIndex]
+          : "Richtig! Vergleiche kurz deine Antwort mit der Erklärung, bevor du weitergehst."
+        : exercise.type === "choice"
+          ? exercise.optionFeedback[feedback.selectedIndex]
+          : exercise.errorFeedback;
+  const nextLabel =
+    session.index + 1 <
+    (isReview ? dayOneCurriculum.review.length : dayOneCurriculum.practice.length)
+      ? "Nächste Aufgabe"
+      : isReview
+        ? "Stunde abschließen"
+        : "Weiter zur Wiederholung";
+
+  return `
+    <section class="day-one-feedback${selfCheck ? " day-one-feedback--self" : feedback.correct ? " day-one-feedback--correct" : " day-one-feedback--incorrect"}" aria-labelledby="feedback-title">
+      <p class="section-label"><span class="section-label__icon" aria-hidden="true">${selfCheck ? "↗" : feedback.correct ? "✓" : "↻"}</span>${selfCheck ? "SELBSTCHECK" : feedback.correct ? "GUT GEMACHT" : "NOCH EINMAL NACHVOLLZIEHEN"}</p>
+      <h2 id="feedback-title">${selfCheck ? "Jetzt kommt die Erklärung" : feedback.correct ? "Richtig – und hier ist das Warum" : "Aus Fehlern lernt man"}</h2>
+      <h3>${escapeHtml(exercise.title)}</h3>
+      <p class="feedback-explanation">${escapeHtml(feedbackText)}</p>
+      ${
+        !selfCheck && !feedback.correct && exercise.hint
+          ? `<div class="feedback-hint"><strong>Denkanstoß</strong><p>${escapeHtml(exercise.hint)}</p></div>`
+          : ""
+      }
+      <div class="feedback-reason">
+        <p class="feedback-reason__title">Warum?</p>
+        <p>${escapeHtml(exercise.explanation)}</p>
+      </div>
+      <div class="feedback-solution">
+        <div class="feedback-solution__heading">
+          <strong>${escapeHtml(exercise.solutionLabel || "Musterlösung")}</strong>
+          <span>${selfCheck ? "Ein möglicher Weg" : feedback.correct ? "Zum Vergleichen" : "Schritt für Schritt"}</span>
+        </div>
+        <pre><code>${escapeHtml(exercise.solution)}</code></pre>
+      </div>
+      ${
+        !selfCheck && !feedback.correct && feedback.response
+          ? `<details class="your-answer"><summary>Meine Antwort noch einmal ansehen</summary><pre>${escapeHtml(feedback.response)}</pre></details>`
+          : ""
+      }
+      <div class="feedback-actions">
+        ${!selfCheck && !feedback.correct ? `<button class="secondary-button" type="button" data-action="day-one-retry">Noch einmal selbst versuchen</button>` : ""}
+        <button class="complete-button" type="button" data-action="day-one-next">
+          ${nextLabel}<span aria-hidden="true">→</span>
+        </button>
+      </div>
+    </section>
+  `;
+}
+
+function renderDayOneComplete() {
+  return `
+    <section class="day-one-complete">
+      <span class="day-one-complete__icon" aria-hidden="true">✓</span>
+      <p class="section-label">TAG 1 ABGESCHLOSSEN</p>
+      <h2>Deine erste Python-Stunde geschafft!</h2>
+      <p>Du hast drei Lernabschnitte durchgearbeitet, acht Übungen ausprobiert und fünf Wiederholungsfragen beantwortet. Das ist ein solides Fundament – nicht nur ein kurzer Quiz.</p>
+      <div class="day-one-complete__summary">
+        <strong>Das kannst du jetzt:</strong>
+        <ul>
+          <li>erklären, wie Python Anweisungen der Reihe nach ausführt</li>
+          <li>mit <code>print()</code> Text in der Konsole ausgeben</li>
+          <li>Text mit passenden Anführungszeichen schreiben</li>
+          <li>einen fehlenden Anführungszeichen-Fehler finden und beheben</li>
+        </ul>
+      </div>
+      <p class="lesson-card__note"><span aria-hidden="true">✦</span><span>Wiederholen ist Teil des Lernens. Wenn sich etwas noch unsicher anfühlt, kannst du Tag 1 jederzeit noch einmal bearbeiten.</span></p>
+      <button class="complete-button" type="button" data-action="next">Weiter zu Tag 2 <span aria-hidden="true">→</span></button>
+    </section>
+  `;
+}
+
+function getDayOneExercise(stage, index) {
+  const exercises =
+    stage === "review" ? dayOneCurriculum.review : dayOneCurriculum.practice;
+  return exercises[index];
+}
+
+function normalizeExerciseAnswer(answer) {
+  return answer.replace(/\r\n?/g, "\n").split("\n").map((line) => line.trim()).join("\n").trim();
+}
+
+function moveDayOneForward(session) {
+  if (session.stage === "learning") {
+    if (session.index + 1 < dayOneCurriculum.learning.length) {
+      session.index += 1;
+    } else {
+      session.stage = "practice";
+      session.index = 0;
+    }
+  } else if (session.stage === "feedback") {
+    const exercises =
+      session.stageBeforeFeedback === "review"
+        ? dayOneCurriculum.review
+        : dayOneCurriculum.practice;
+    if (session.index + 1 < exercises.length) {
+      session.stage = session.stageBeforeFeedback;
+      session.index += 1;
+    } else if (session.stageBeforeFeedback === "practice") {
+      session.stage = "review";
+      session.index = 0;
+    } else {
+      session.stage = "complete";
+      session.index = 0;
+    }
+    session.stageBeforeFeedback = null;
+    session.feedback = null;
+  }
 }
 
 function renderNavigation() {
@@ -558,6 +922,10 @@ function renderLesson() {
   const profile = currentProfile();
   const lesson = lessons.find((item) => item.id === profile.currentLesson);
   if (!lesson) return;
+  if (lesson.id === 1) {
+    renderDayOne(lesson, profile);
+    return;
+  }
 
   const isComplete = profile.completed.includes(lesson.id);
   lessonView.innerHTML = `
@@ -652,6 +1020,11 @@ profileSelect.addEventListener("change", () => {
 });
 
 lessonView.addEventListener("submit", (event) => {
+  if (event.target.matches(".day-one-answer")) {
+    event.preventDefault();
+    submitDayOneAnswer(event.target);
+    return;
+  }
   if (!event.target.matches(".quiz-form")) return;
   event.preventDefault();
 
@@ -675,6 +1048,61 @@ lessonView.addEventListener("submit", (event) => {
   }
 });
 
+function submitDayOneAnswer(form) {
+  const formData = new FormData(form);
+  const stage = form.dataset.exerciseStage;
+  const index = Number(form.dataset.exerciseIndex);
+  const exercise = getDayOneExercise(stage, index);
+  const session = currentProfile().dayOneSession;
+  const selectedOption = formData.get("answer");
+  const selectedIndex =
+    exercise.type === "choice" ? Number(selectedOption) : null;
+  const draft = String(formData.get("response") ?? "").trim();
+  const feedbackElement = form.querySelector("#day-one-form-feedback");
+
+  if (
+    (exercise.type === "choice" && selectedOption === null) ||
+    ((exercise.type === "code" || exercise.type === "text") && !draft) ||
+    (exercise.type === "reflection" && !draft) ||
+    ((exercise.type === "self-check" || exercise.type === "reflection") &&
+      !formData.get("selfCheck"))
+  ) {
+    feedbackElement.textContent =
+      "Fülle erst die Antwort aus und wähle dann die passende Rückmeldung.";
+    return;
+  }
+
+  const selfCheck =
+    exercise.type === "self-check" || exercise.type === "reflection";
+  const response = selfCheck
+    ? draft
+    : exercise.type === "choice"
+      ? exercise.options[selectedIndex]
+      : draft;
+  const correct = selfCheck
+    ? false
+    : exercise.type === "choice"
+      ? selectedIndex === exercise.answer
+      : exercise.accepted.some(
+          (answer) =>
+            normalizeExerciseAnswer(answer) ===
+            normalizeExerciseAnswer(draft),
+        );
+
+  session.stageBeforeFeedback = stage;
+  session.feedback = {
+    correct,
+    selfCheck,
+    selfCheckOutcome: String(formData.get("selfCheck") ?? "need-help"),
+    response,
+    selectedIndex,
+  };
+  session.stage = "feedback";
+  saveState();
+  renderApp();
+  lessonView.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 lessonView.addEventListener("click", (event) => {
   const button = event.target.closest("[data-action]");
   if (!button || button.disabled) return;
@@ -682,7 +1110,25 @@ lessonView.addEventListener("click", (event) => {
   const profile = currentProfile();
   const lesson = lessons.find((item) => item.id === profile.currentLesson);
 
-  if (button.dataset.action === "toggle-complete") {
+  if (button.dataset.action === "day-one-next") {
+    const session = profile.dayOneSession;
+    if (session.stage === "feedback") {
+      moveDayOneForward(session);
+    } else if (session.stage === "learning") {
+      moveDayOneForward(session);
+    }
+    if (session.stage === "complete" && !profile.completed.includes(1)) {
+      profile.completed.push(1);
+    }
+  } else if (button.dataset.action === "day-one-retry") {
+    const session = profile.dayOneSession;
+    session.stage = session.stageBeforeFeedback;
+    session.stageBeforeFeedback = null;
+    session.feedback = null;
+  } else if (button.dataset.action === "restart-day-one") {
+    profile.dayOneSession = createDayOneSession();
+    profile.completed = profile.completed.filter((id) => id !== 1);
+  } else if (button.dataset.action === "toggle-complete") {
     if (profile.completed.includes(lesson.id)) {
       profile.completed = profile.completed.filter((id) => id !== lesson.id);
     } else {
@@ -698,13 +1144,13 @@ lessonView.addEventListener("click", (event) => {
 
   saveState();
   renderApp();
-
-  if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
-    navigator.serviceWorker.register("./service-worker.js").catch((error) => {
-      console.error("Der Offline-Modus konnte nicht eingerichtet werden.", error);
-    });
-  }
   lessonView.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
 renderApp();
+
+if ("serviceWorker" in navigator && window.location.protocol !== "file:") {
+  navigator.serviceWorker.register("./service-worker.js").catch((error) => {
+    console.error("Der Offline-Modus konnte nicht eingerichtet werden.", error);
+  });
+}
