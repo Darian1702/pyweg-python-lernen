@@ -449,11 +449,17 @@ function createDayOneSession() {
 function normalizeDayOneSession(session) {
   if (!session || typeof session !== "object") return createDayOneSession();
 
+  return normalizeCourseSession(session, dayOneCurriculum);
+}
+
+function normalizeCourseSession(session, curriculum) {
+  if (!session || typeof session !== "object") return createDayOneSession();
+
   const stageLengths = {
-    learning: dayOneCurriculum.learning.length,
-    practice: dayOneCurriculum.practice.length,
-    feedback: dayOneCurriculum.practice.length,
-    review: dayOneCurriculum.review.length,
+    learning: curriculum.learning.length,
+    practice: curriculum.practice.length,
+    feedback: Math.max(curriculum.practice.length, curriculum.review.length),
+    review: curriculum.review.length,
     complete: 1,
   };
   const stage = Object.hasOwn(stageLengths, session.stage)
@@ -492,6 +498,7 @@ function readSavedState() {
     completed: [],
     currentLesson: 1,
     dayOneSession: createDayOneSession(),
+    lessonSessions: {},
   });
   if (!saved) {
     return {
@@ -515,12 +522,28 @@ function readSavedState() {
         )
           ? profile.currentLesson
           : 1;
+        const lessonSessions = Object.fromEntries(
+          Object.entries(profile.lessonSessions || {})
+            .map(([lessonId, session]) => {
+              const curriculum =
+                typeof extendedCourseCurriculum === "undefined"
+                  ? null
+                  : extendedCourseCurriculum[Number(lessonId)];
+              if (!curriculum) return null;
+              return [
+                lessonId,
+                normalizeCourseSession(session, curriculum),
+              ];
+            })
+            .filter(Boolean),
+        );
         return [
           id,
           {
             completed,
             currentLesson,
             dayOneSession: normalizeDayOneSession(profile.dayOneSession),
+            lessonSessions,
           },
         ];
       }),
@@ -551,6 +574,18 @@ function currentProfile() {
   return state.profiles[state.activeProfile];
 }
 
+function currentCurriculum(lessonId) {
+  if (lessonId === 1) return dayOneCurriculum;
+  return typeof extendedCourseCurriculum === "undefined"
+    ? null
+    : (extendedCourseCurriculum[lessonId] ?? null);
+}
+
+function currentLessonSession(profile, lessonId) {
+  if (lessonId === 1) return profile.dayOneSession;
+  return (profile.lessonSessions[lessonId] ??= createDayOneSession());
+}
+
 let state = readSavedState();
 
 function saveState() {
@@ -570,12 +605,24 @@ function escapeHtml(value) {
   });
 }
 
-function renderDayOne(lesson, profile) {
-  const session = profile.dayOneSession;
+function renderDayOne(lesson, profile, curriculum) {
+  const session = currentLessonSession(profile, lesson.id);
   const stages = [
-    { id: "learning", label: "Lernen", duration: "10 min" },
-    { id: "practice", label: "Üben", duration: "35 min" },
-    { id: "review", label: "Wiederholen", duration: "15 min" },
+    {
+      id: "learning",
+      label: "Lernen",
+      duration: `${curriculum.learning.reduce((total, item) => total + item.duration, 0)} min`,
+    },
+    {
+      id: "practice",
+      label: "Üben",
+      duration: `${curriculum.practice.reduce((total, item) => total + item.duration, 0)} min`,
+    },
+    {
+      id: "review",
+      label: "Wiederholen",
+      duration: `${curriculum.review.reduce((total, item) => total + item.duration, 0)} min`,
+    },
   ];
   const stageLabels = {
     learning: "Lernen",
@@ -587,14 +634,18 @@ function renderDayOne(lesson, profile) {
 
   let content;
   if (session.stage === "learning") {
-    content = renderDayOneLearning(session);
+    content = renderDayOneLearning(session, curriculum);
   } else if (session.stage === "practice" || session.stage === "review") {
-    content = renderDayOneExercise(session);
+    content = renderDayOneExercise(session, curriculum);
   } else if (session.stage === "feedback") {
-    content = renderDayOneFeedback(session);
+    content = renderDayOneFeedback(session, curriculum);
   } else {
-    content = renderDayOneComplete();
+    content = renderDayOneComplete(curriculum, lesson);
   }
+  const totalMinutes = stages.reduce(
+    (total, stage) => total + Number.parseInt(stage.duration, 10),
+    0,
+  );
 
   const phaseIndex =
     session.stage === "learning"
@@ -609,10 +660,10 @@ function renderDayOne(lesson, profile) {
     <header class="lesson-heading">
       <div class="lesson-heading__meta">
         <span>Woche ${lesson.week} · ${escapeHtml(lesson.weekTitle)}</span>
-        <span>Tag 01 von 28</span>
+        <span>Tag ${String(lesson.id).padStart(2, "0")} von 28</span>
       </div>
       <h1>${escapeHtml(lesson.title)}</h1>
-      <p class="lesson-heading__subtitle">Deine erste Python-Stunde: selbst entdecken, ausprobieren und wiederholen.</p>
+      <p class="lesson-heading__subtitle">${escapeHtml(lesson.id === 1 ? "Deine erste Python-Stunde: selbst entdecken, ausprobieren und wiederholen." : lesson.subtitle)}</p>
     </header>
 
     <section class="day-one-plan" aria-label="Stundenplan">
@@ -621,7 +672,7 @@ function renderDayOne(lesson, profile) {
           <p class="section-label">DEIN STUNDENPLAN</p>
           <h2>Eine Stunde, Schritt für Schritt</h2>
         </div>
-        <span class="day-one-plan__total">ca. 60 Minuten</span>
+        <span class="day-one-plan__total">ca. ${totalMinutes} Minuten</span>
       </div>
       <div class="day-one-plan__stages">
         ${stages
@@ -647,17 +698,17 @@ function renderDayOne(lesson, profile) {
     ${
       session.stage === "complete"
         ? `<nav class="lesson-nav" aria-label="Kursnavigation">
-            <button type="button" data-action="restart-day-one">↻ Tag 1 wiederholen</button>
-            <button type="button" data-action="next">Nächste Lektion →</button>
+            <button type="button" data-action="restart-day-one">↻ Tag ${lesson.id} wiederholen</button>
+            ${lesson.id < lessons.length ? `<button type="button" data-action="next">Nächste Lektion →</button>` : ""}
           </nav>`
         : ""
     }
   `;
 }
 
-function renderDayOneLearning(session) {
-  const segment = dayOneCurriculum.learning[session.index];
-  const total = dayOneCurriculum.learning.length;
+function renderDayOneLearning(session, curriculum) {
+  const segment = curriculum.learning[session.index];
+  const total = curriculum.learning.length;
   return `
     <section class="day-one-step" aria-labelledby="day-one-step-title">
       <div class="day-one-step__topline">
@@ -688,11 +739,11 @@ function renderDayOneLearning(session) {
   `;
 }
 
-function renderDayOneExercise(session) {
+function renderDayOneExercise(session, curriculum) {
   const isReview = session.stage === "review";
   const exercises = isReview
-    ? dayOneCurriculum.review
-    : dayOneCurriculum.practice;
+    ? curriculum.review
+    : curriculum.practice;
   const exercise = exercises[session.index];
   const phaseLabel = isReview ? "WIEDERHOLEN" : "ÜBEN";
   const formContent = renderExerciseInput(exercise);
@@ -752,8 +803,8 @@ function renderExerciseInput(exercise) {
     </fieldset>`;
 }
 
-function renderDayOneFeedback(session) {
-  const exercise = getDayOneExercise(session.stage, session.index);
+function renderDayOneFeedback(session, curriculum) {
+  const exercise = getDayOneExercise(session.stageBeforeFeedback, session.index, curriculum);
   const feedback = session.feedback;
   const selfCheck = feedback.selfCheck;
   const isReview = session.stageBeforeFeedback === "review";
@@ -771,7 +822,7 @@ function renderDayOneFeedback(session) {
           : exercise.errorFeedback;
   const nextLabel =
     session.index + 1 <
-    (isReview ? dayOneCurriculum.review.length : dayOneCurriculum.practice.length)
+    (isReview ? curriculum.review.length : curriculum.practice.length)
       ? "Nächste Aufgabe"
       : isReview
         ? "Stunde abschließen"
@@ -814,31 +865,32 @@ function renderDayOneFeedback(session) {
   `;
 }
 
-function renderDayOneComplete() {
+function renderDayOneComplete(curriculum, lesson) {
+  const learningObjectives = curriculum.learning
+    .map((segment) => `<li>${escapeHtml(segment.objective)}</li>`)
+    .join("");
+  const isDayOne = lesson.id === 1;
   return `
     <section class="day-one-complete">
       <span class="day-one-complete__icon" aria-hidden="true">✓</span>
-      <p class="section-label">TAG 1 ABGESCHLOSSEN</p>
-      <h2>Deine erste Python-Stunde geschafft!</h2>
-      <p>Du hast drei Lernabschnitte durchgearbeitet, acht Übungen ausprobiert und fünf Wiederholungsfragen beantwortet. Das ist ein solides Fundament – nicht nur ein kurzer Quiz.</p>
+      <p class="section-label">TAG ${lesson.id} ABGESCHLOSSEN</p>
+      <h2>${isDayOne ? "Deine erste Python-Stunde geschafft!" : "Stark – diese Python-Stunde ist geschafft!"}</h2>
+      <p>Du hast ${curriculum.learning.length} Lernabschnitte durchgearbeitet, ${curriculum.practice.length} Übungen ausprobiert und ${curriculum.review.length} Wiederholungsfragen beantwortet. Das ist ein solides Fundament – nicht nur ein kurzer Quiz.</p>
       <div class="day-one-complete__summary">
         <strong>Das kannst du jetzt:</strong>
         <ul>
-          <li>erklären, wie Python Anweisungen der Reihe nach ausführt</li>
-          <li>mit <code>print()</code> Text in der Konsole ausgeben</li>
-          <li>Text mit passenden Anführungszeichen schreiben</li>
-          <li>einen fehlenden Anführungszeichen-Fehler finden und beheben</li>
+          ${learningObjectives}
         </ul>
       </div>
-      <p class="lesson-card__note"><span aria-hidden="true">✦</span><span>Wiederholen ist Teil des Lernens. Wenn sich etwas noch unsicher anfühlt, kannst du Tag 1 jederzeit noch einmal bearbeiten.</span></p>
-      <button class="complete-button" type="button" data-action="next">Weiter zu Tag 2 <span aria-hidden="true">→</span></button>
+      <p class="lesson-card__note"><span aria-hidden="true">✦</span><span>${isDayOne ? "Wiederholen ist Teil des Lernens. Wenn sich etwas noch unsicher anfühlt, kannst du Tag 1 jederzeit noch einmal bearbeiten." : "Wiederholen ist Teil des Lernens. Wenn sich etwas noch unsicher anfühlt, kannst du diesen Tag jederzeit noch einmal bearbeiten."}</span></p>
+      <button class="complete-button" type="button" data-action="${lesson.id < lessons.length ? "next" : "restart-day-one"}">${isDayOne ? "Weiter zu Tag 2" : lesson.id < lessons.length ? "Weiter zur nächsten Lektion" : "Diesen Tag noch einmal üben"} <span aria-hidden="true">→</span></button>
     </section>
   `;
 }
 
-function getDayOneExercise(stage, index) {
+function getDayOneExercise(stage, index, curriculum = dayOneCurriculum) {
   const exercises =
-    stage === "review" ? dayOneCurriculum.review : dayOneCurriculum.practice;
+    stage === "review" ? curriculum.review : curriculum.practice;
   return exercises[index];
 }
 
@@ -846,9 +898,9 @@ function normalizeExerciseAnswer(answer) {
   return answer.replace(/\r\n?/g, "\n").split("\n").map((line) => line.trim()).join("\n").trim();
 }
 
-function moveDayOneForward(session) {
+function moveDayOneForward(session, curriculum) {
   if (session.stage === "learning") {
-    if (session.index + 1 < dayOneCurriculum.learning.length) {
+    if (session.index + 1 < curriculum.learning.length) {
       session.index += 1;
     } else {
       session.stage = "practice";
@@ -857,8 +909,8 @@ function moveDayOneForward(session) {
   } else if (session.stage === "feedback") {
     const exercises =
       session.stageBeforeFeedback === "review"
-        ? dayOneCurriculum.review
-        : dayOneCurriculum.practice;
+          ? curriculum.review
+          : curriculum.practice;
     if (session.index + 1 < exercises.length) {
       session.stage = session.stageBeforeFeedback;
       session.index += 1;
@@ -922,8 +974,9 @@ function renderLesson() {
   const profile = currentProfile();
   const lesson = lessons.find((item) => item.id === profile.currentLesson);
   if (!lesson) return;
-  if (lesson.id === 1) {
-    renderDayOne(lesson, profile);
+  const curriculum = currentCurriculum(lesson.id);
+  if (curriculum) {
+    renderDayOne(lesson, profile, curriculum);
     return;
   }
 
@@ -1052,8 +1105,11 @@ function submitDayOneAnswer(form) {
   const formData = new FormData(form);
   const stage = form.dataset.exerciseStage;
   const index = Number(form.dataset.exerciseIndex);
-  const exercise = getDayOneExercise(stage, index);
-  const session = currentProfile().dayOneSession;
+  const profile = currentProfile();
+  const lesson = lessons.find((item) => item.id === profile.currentLesson);
+  const curriculum = currentCurriculum(lesson.id);
+  const exercise = getDayOneExercise(stage, index, curriculum);
+  const session = currentLessonSession(profile, lesson.id);
   const selectedOption = formData.get("answer");
   const selectedIndex =
     exercise.type === "choice" ? Number(selectedOption) : null;
@@ -1109,25 +1165,30 @@ lessonView.addEventListener("click", (event) => {
 
   const profile = currentProfile();
   const lesson = lessons.find((item) => item.id === profile.currentLesson);
+  const curriculum = currentCurriculum(lesson.id);
 
   if (button.dataset.action === "day-one-next") {
-    const session = profile.dayOneSession;
+    const session = currentLessonSession(profile, lesson.id);
     if (session.stage === "feedback") {
-      moveDayOneForward(session);
+      moveDayOneForward(session, curriculum);
     } else if (session.stage === "learning") {
-      moveDayOneForward(session);
+      moveDayOneForward(session, curriculum);
     }
-    if (session.stage === "complete" && !profile.completed.includes(1)) {
-      profile.completed.push(1);
+    if (session.stage === "complete" && !profile.completed.includes(lesson.id)) {
+      profile.completed.push(lesson.id);
     }
   } else if (button.dataset.action === "day-one-retry") {
-    const session = profile.dayOneSession;
+    const session = currentLessonSession(profile, lesson.id);
     session.stage = session.stageBeforeFeedback;
     session.stageBeforeFeedback = null;
     session.feedback = null;
   } else if (button.dataset.action === "restart-day-one") {
-    profile.dayOneSession = createDayOneSession();
-    profile.completed = profile.completed.filter((id) => id !== 1);
+    if (lesson.id === 1) {
+      profile.dayOneSession = createDayOneSession();
+    } else {
+      delete profile.lessonSessions[lesson.id];
+    }
+    profile.completed = profile.completed.filter((id) => id !== lesson.id);
   } else if (button.dataset.action === "toggle-complete") {
     if (profile.completed.includes(lesson.id)) {
       profile.completed = profile.completed.filter((id) => id !== lesson.id);

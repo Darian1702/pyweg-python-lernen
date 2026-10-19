@@ -1,10 +1,11 @@
-const CACHE_NAME = "pyweg-app-v2";
+const CACHE_NAME = "pyweg-app-v3";
 const APP_FILES = [
   "./",
   "./index.html",
   "./style.css",
   "./script.js",
   "./day-one.js",
+  "./course-content.js",
   "./manifest.webmanifest",
   "./icon.svg",
 ];

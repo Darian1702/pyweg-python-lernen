@@ -6,9 +6,9 @@ Ein kostenloser, deutschsprachiger Lernpfad mit 28 Tageslektionen für den Einst
 
 Öffne `index.html` im Browser. Lektionen, Übungen und Quiz funktionieren direkt. Für Installation und Offline-Modus braucht der Browser HTTPS oder `localhost`, da Service Worker nicht bei `file://` ausgeführt werden.
 
-## Tag 1: ausführliche Probestunde
+## Ausführliche Tageslektionen
 
-Tag 1 ist als etwa einstündige Lerneinheit aufgebaut: 10 Minuten Lernen in drei Abschnitten, 35 Minuten für acht schrittweise Übungen und 15 Minuten für fünf Wiederholungsfragen. Nach jeder Aufgabe öffnet sich eine eigene Auswertung mit Erklärung, Denkanstoß und Beispielantwort. Bei offenen Programmieraufgaben vergleichst du deinen eigenen Lösungsweg selbst mit dem Beispiel; kurze Code- und Ausgabeaufgaben werden automatisch geprüft. Die Website führt Python-Code nicht selbst aus – für praktische Versuche kannst du die Beispiele zusätzlich in einem lokalen Python-Interpreter starten.
+Tag 1 ist als etwa einstündige Lerneinheit aufgebaut: 10 Minuten Lernen in drei Abschnitten, 35 Minuten für acht schrittweise Übungen und 15 Minuten für fünf Wiederholungsfragen. Die Tage 2 bis 28 folgen demselben geführten Ablauf mit ausführlichen Lernabschnitten, mehreren zunehmend anspruchsvollen Übungen und Wiederholungsfragen. Jede Aufgabe bietet eine eigene Auswertung mit Erklärung, Denkanstoß und Musterlösung. Bei offenen Programmieraufgaben vergleichst du deinen eigenen Lösungsweg selbst mit dem Beispiel; kurze Code- und Ausgabeaufgaben werden automatisch geprüft. Die Website führt Python-Code nicht selbst aus – für praktische Versuche kannst du die Beispiele zusätzlich in einem lokalen Python-Interpreter starten.
 
 ## Auf GitHub Pages veröffentlichen
 
@@ -35,6 +35,7 @@ Es gibt derzeit weder echte Benutzerkonten noch eine Zugriffskontrolle. Wer Brow
 - `style.css` – responsives Design
 - `script.js` – Lernpfad, Übungen, Quiz und lokale Fortschritte
 - `day-one.js` – ausführlicher interaktiver Lern-, Übungs- und Wiederholungsblock für Tag 1
+- `course-content.js` – ausführliche Inhalte für die Tage 2 bis 28
 - `manifest.webmanifest` – Installationsinformationen für die PWA
 - `service-worker.js` – Offline-Caching
 - `icon.svg` – App-Symbol
