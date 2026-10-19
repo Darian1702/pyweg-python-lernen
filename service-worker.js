@@ -1,4 +1,4 @@
-const CACHE_NAME = "pyweg-app-v3";
+const CACHE_NAME = "pyweg-app-v4";
 const APP_FILES = [
   "./",
   "./index.html",

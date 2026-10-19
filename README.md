@@ -8,7 +8,7 @@ Ein kostenloser, deutschsprachiger Lernpfad mit 28 Tageslektionen für den Einst
 
 ## Ausführliche Tageslektionen
 
-Tag 1 ist als etwa einstündige Lerneinheit aufgebaut: 10 Minuten Lernen in drei Abschnitten, 35 Minuten für acht schrittweise Übungen und 15 Minuten für fünf Wiederholungsfragen. Die Tage 2 bis 28 folgen demselben geführten Ablauf mit ausführlichen Lernabschnitten, mehreren zunehmend anspruchsvollen Übungen und Wiederholungsfragen. Jede Aufgabe bietet eine eigene Auswertung mit Erklärung, Denkanstoß und Musterlösung. Bei offenen Programmieraufgaben vergleichst du deinen eigenen Lösungsweg selbst mit dem Beispiel; kurze Code- und Ausgabeaufgaben werden automatisch geprüft. Die Website führt Python-Code nicht selbst aus – für praktische Versuche kannst du die Beispiele zusätzlich in einem lokalen Python-Interpreter starten.
+Jeder Tag ist auf eine Lernstunde ausgelegt. Tag 1 umfasst 10 Minuten Lernen, 35 Minuten progressive Übungen und 15 Minuten Wiederholung. Für Tag 2 bis 28 sind jeweils rund 20 Minuten Lernen, 36 Minuten mit acht schrittweise schwieriger werdenden Übungen und 10 Minuten Wiederholung geplant – insgesamt etwa 66 Minuten. Die Übungszeit ist dafür gedacht, Python-Code in einem Interpreter selbst zu schreiben, auszuführen und zu testen; die Website führt Code nicht selbst aus. Jede Aufgabe bietet eine eigene Auswertung mit Erklärung, Denkanstoß und Musterlösung; bei offenen Programmieraufgaben vergleichst du deinen eigenen Lösungsweg mit dem Beispiel. Die tatsächliche Dauer hängt von Lerntempo und Vorkenntnissen ab.
 
 ## Auf GitHub Pages veröffentlichen
 
